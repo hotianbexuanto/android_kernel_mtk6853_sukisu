@@ -1891,6 +1891,14 @@ int do_execveat(int fd, struct filename *filename,
 	return do_execveat_common(fd, filename, argv, envp, flags);
 }
 
+#if defined(CONFIG_KSU) && !defined(CONFIG_KSU_WITH_KPROBES)
+extern bool ksu_execveat_hook __read_mostly;
+extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
+			void *envp, int *flags);
+extern int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
+				 void *argv, void *envp, int *flags);
+#endif
+
 #ifdef CONFIG_COMPAT
 static int compat_do_execve(struct filename *filename,
 	const compat_uptr_t __user *__argv,
@@ -1904,6 +1912,12 @@ static int compat_do_execve(struct filename *filename,
 		.is_compat = true,
 		.ptr.compat = __envp,
 	};
+#if defined(CONFIG_KSU) && !defined(CONFIG_KSU_WITH_KPROBES)
+	if (unlikely(ksu_execveat_hook))
+		ksu_handle_execveat((int *)AT_FDCWD, &filename, &argv, &envp, 0);
+	else
+		ksu_handle_execveat_sucompat((int *)AT_FDCWD, &filename, NULL, NULL, NULL);
+#endif
 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
 }
 
