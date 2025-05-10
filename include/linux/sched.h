@@ -8,6 +8,11 @@
  */
 #include <uapi/linux/sched.h>
 
+#ifdef CONFIG_KSU
+/* 兼容KernelSU的thread_pid别名 */
+#define thread_pid thread_node
+#endif
+
 #include <asm/current.h>
 
 #include <linux/pid.h>
